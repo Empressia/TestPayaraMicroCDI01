@@ -1,0 +1,70 @@
+plugins {
+	id "java";
+	id "war";
+	id "jp.empressia.gradle.plugin.misc" version "1.0.5";
+}
+
+ext.moduleName = project.name;
+ext.junitVersion = "5.7.0";
+ext.hamcrestVersion = "2.2";
+archivesBaseName = moduleName;
+
+repositories {
+	mavenCentral();
+}
+
+dependencies {
+	// use Payara Micro.
+	providedRuntime(group:"fish.payara.extras", name:"payara-micro", version:"5.2021.3");
+
+	// use Jakarta Context Dependency Injection.
+	providedCompile(group:"jakarta.enterprise", name:"jakarta.enterprise.cdi-api", version:"2.0.2");
+	// use Jakarta Servlet.
+	providedCompile(group:"jakarta.servlet", name: "jakarta.servlet-api", version:"4.0.2");
+
+	// use JUnit test framework.
+	testImplementation(group:"org.junit.jupiter", name:"junit-jupiter-api", version:junitVersion);
+	testRuntimeOnly(group:"org.junit.jupiter", name:"junit-jupiter-engine", version:junitVersion);
+	testImplementation(group:"org.hamcrest", name:"hamcrest", version:hamcrestVersion);
+}
+
+task copySyncLibraries(type: jp.empressia.gradle.task.CopySync) {
+	from = configurations.runtimeClasspath - configurations.providedRuntime;
+	into = file("${buildDir}/libraries");
+}
+
+tasks.withType(JavaCompile) {
+	options.encoding "UTF-8";
+	options.release = 11;
+	options.compilerArgs << "-parameters";
+}
+
+java {
+	withJavadocJar();
+	withSourcesJar();
+}
+
+war {
+	manifest {
+		attributes (
+			"Automatic-Module-Name": moduleName
+		);
+	}
+}
+
+javadoc {
+	options.charSet "UTF-8";
+	options.encoding "UTF-8";
+	options.addBooleanOption("html5", true);
+	options.addStringOption("Xdoclint:none", "-quiet");
+}
+
+test {
+	useJUnitPlatform();
+}
+
+task start(type: JavaExec) {
+	main = "-jar";
+	args = [configurations.providedRuntime.find { it.name.contains("payara-micro-") }.absolutePath, "--deploy", "\"${buildDir}/libs/${moduleName}.war;\""];
+}
+start.dependsOn(tasks.war);
