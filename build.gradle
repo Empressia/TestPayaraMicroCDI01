@@ -33,6 +33,11 @@ task copySyncLibraries(type: jp.empressia.gradle.task.CopySync) {
 	into = file("${buildDir}/libraries");
 }
 
+task copySyncRuntime(type: jp.empressia.gradle.task.CopySync) {
+	from = configurations.providedRuntime;
+	into = file("${buildDir}/runtime");
+}
+
 tasks.withType(JavaCompile) {
 	options.encoding "UTF-8";
 	options.release = 11;
@@ -70,7 +75,7 @@ task start(type: JavaExec) {
 start.dependsOn(tasks.war);
 
 task start2(type: JavaExec) {
-	classpath = configurations.providedRuntime;
+	classpath = configurations.providedRuntime.filter { it.name.contains("payara-micro-") };
 	mainClass = "fish.payara.micro.PayaraMicro";
 	jvmArgs = ["--add-exports", "java.base/jdk.internal.ref=ALL-UNNAMED", "--add-opens", "java.base/java.lang=ALL-UNNAMED", "--add-opens", "java.base/java.nio=ALL-UNNAMED", "--add-opens", "java.base/sun.nio.ch=ALL-UNNAMED", "--add-opens", "java.management/sun.management=ALL-UNNAMED", "--add-opens", "jdk.management/com.sun.management.internal=ALL-UNNAMED", "--add-opens", "java.base/jdk.internal.loader=ALL-UNNAMED", "--add-opens", "java.base/java.util.stream=ALL-UNNAMED"];
 	args = ["--deploy", "\"${buildDir}/libs/${moduleName}.war;\""];
