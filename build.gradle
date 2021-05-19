@@ -68,3 +68,10 @@ task start(type: JavaExec) {
 	args = [configurations.providedRuntime.find { it.name.contains("payara-micro-") }.absolutePath, "--deploy", "\"${buildDir}/libs/${moduleName}.war;\""];
 }
 start.dependsOn(tasks.war);
+
+task start2(type: JavaExec) {
+	classpath = configurations.providedRuntime;
+	mainClass = "fish.payara.micro.PayaraMicro";
+	args = ["--deploy", "\"${buildDir}/libs/${moduleName}.war;\""];
+}
+start2.dependsOn(tasks.war);
